@@ -56,11 +56,11 @@ class TestSearch:
         kwargs["where"] = "Burrito Bunker"
         params = si._prep_params(**kwargs)
         assert params == "foo=bar&raw=cooked&where=Burrito+Bunker"
-        kwargs["when"] = "   A long\tlong time ago"
+        kwargs["when"] = "   A long,\tlong time ago"
         params = si._prep_params(**kwargs)
         assert (
             params
-            == "foo=bar&raw=cooked&where=Burrito+Bunker&when=A+long+long+time+ago"
+            == "foo=bar&raw=cooked&where=Burrito+Bunker&when=A+long%2C+long+time+ago"
         )
 
     def test_search_title(self):
