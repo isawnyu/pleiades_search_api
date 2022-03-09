@@ -21,3 +21,10 @@ class TestSearch:
         si = SearchInterface()
         assert getattr(si, "web")
         assert getattr(si.web, "get")
+        assert si.web.netloc == "pleiades.stoa.org"
+        assert si.web.respect_robots_txt
+
+    def test_init_custom_user_agent(self):
+        ua = "CosmicBurritoBot/7.3 (+http://nowhere.com/cosmicburritobot)"
+        si = SearchInterface(user_agent=ua)
+        assert si.web.user_agent == ua
