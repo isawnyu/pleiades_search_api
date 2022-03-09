@@ -34,7 +34,11 @@ class Query:
                 "list_additional": {"AND": {"get_usage:ignore_empty": "operator:and"}},
                 "rename": "getFeatureType",
             },
-            "tag": {"expected": str, "rename": "Subject:list"},
+            "tag": {
+                "expected": (str, list),
+                "list_behavior": "noseq",
+                "rename": "Subject:list",
+            },
             "text": {
                 "expected": (str, list),
                 "list_behavior": "join",
@@ -113,6 +117,7 @@ class Query:
                         else:
                             cooked_value = " ".join(value)
                     elif behavior == "noseq":
+                        logger.debug(f"noseq for {name}")
                         cooked_value = (
                             value  # assumes urlencode will be applied with noseq=True
                         )
@@ -186,7 +191,7 @@ class SearchInterface(Web):
             elif isinstance(v, str):
                 ready_kwargs[k] = v
             elif isinstance(v, list):
-                if k in ["getFeatureType"]:
+                if k in ["getFeatureType", "Subject:list"]:
                     ready_kwargs[k] = v
                 else:
                     ready_kwargs[f"{k}:list"] = ",".join(v)
