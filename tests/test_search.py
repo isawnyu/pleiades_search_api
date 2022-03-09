@@ -66,6 +66,12 @@ class TestQuery:
         assert q.parameters_for_web["getFeatureType"] == ["acropolis", "agora"]
         assert q.parameters_for_web["get_usage:ignore_empty"] == "operator:and"
 
+    def test_tag(self):
+        q = Query()
+        q.set_parameter("tag", "Ammon")
+        assert q.parameters["tag"] == ("Ammon", None)
+        assert q.parameters_for_web["Subject:list"] == "Ammon"
+
     def test_title(self):
         q = Query()
         q.set_parameter("title", "Zucchabar")
@@ -179,6 +185,12 @@ class TestSearch:
         q.set_parameter("feature_type", ["acropolis", "agora"], "OR")
         results = self.si.search(q)
         assert len(results["hits"]) == 25
+
+    def test_search_tag(self):
+        q = Query()
+        q.set_parameter("tag", "Ammon")
+        results = self.si.search(q)
+        assert len(results["hits"]) == 1
 
     def test_search_title(self):
         q = Query()

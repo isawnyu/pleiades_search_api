@@ -34,6 +34,7 @@ class Query:
                 "list_additional": {"AND": {"get_usage:ignore_empty": "operator:and"}},
                 "rename": "getFeatureType",
             },
+            "tag": {"expected": str, "rename": "Subject:list"},
             "text": {
                 "expected": (str, list),
                 "list_behavior": "join",
