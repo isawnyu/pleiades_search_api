@@ -29,6 +29,12 @@ class TestQuery:
         assert q.parameters["text"] == "Miliana"
         assert q.parameters_for_web["SearchableText"] == "Miliana"
 
+    def test_text_or(self):
+        q = Query()
+        q.set_parameter("text", ["Zucchabar", "Luxmanda"], "OR")
+        assert q.parameters["text"] == "Zucchabar OR Luxmanda"
+        assert q.parameters_for_web["SearchableText"] == "Zucchabar OR Luxmanda"
+
 
 class TestSearch:
     def test_init_searchinterface(self):
@@ -99,3 +105,12 @@ class TestSearch:
         assert len(results["hits"]) == 4
         for hit in results["hits"]:
             assert hit["id"] in ["315048", "295374", "295304", "315104"]
+
+    def test_search_text_or(self):
+        si = SearchInterface()
+        q = Query()
+        q.set_parameter("text", ["Zucchabar", "Luxmanda"], "OR")
+        results = si.search(q)
+        assert len(results["hits"]) == 2
+        for hit in results["hits"]:
+            assert hit["id"] in ["295374", "896643025"]

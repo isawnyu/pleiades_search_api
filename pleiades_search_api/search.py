@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class Query:
     def __init__(self):
         self.parameters = dict()
-        self._supported_parameters = {"text": str, "title": str}
+        self._supported_parameters = {"text": (str, list), "title": str}
         self._default_parameters = {
             "portal_type": ["Place"],
             "review_state": ["published"],
@@ -46,21 +46,21 @@ class Query:
                 p[webk] = webv
         return p
 
-    def set_parameter(self, name, value):
+    def set_parameter(self, name, value, operator=None):
         """Set a single parameter on the query."""
         try:
-            expected_class = self._supported_parameters[name]
+            expected_classes = self._supported_parameters[name]
         except KeyError:
             raise ValueError(
                 f"Unexpected parameter name '{name}'. Supported parameters: {sorted(self.supported)}."
             )
-        if not isinstance(value, expected_class):
+        if not isinstance(value, expected_classes):
             raise TypeError(
-                f"Unexpected type {type(value)} for parameter '{name}'. Expected type: {expected_class}."
+                f"Unexpected type {type(value)} for parameter '{name}'. Expected type(s): {expected_classes}."
             )
         self.parameters[name] = getattr(
-            self, f"_set_parameter_{expected_class.__name__}"
-        )(value)
+            self, f"_set_parameter_{value.__class__.__name__.lower()}"
+        )(value, operator)
 
     def _convert_for_web(self, name, value):
         return getattr(self, f"_convert_{name}_for_web")(value)
@@ -71,7 +71,19 @@ class Query:
     def _convert_title_for_web(self, value):
         return {"Title": value}
 
-    def _set_parameter_str(self, value: str):
+    def _set_parameter_list(self, value: list, operator=None):
+        """Process a string value for parameterization"""
+        values = [
+            getattr(self, f"_set_parameter_{v.__class__.__name__.lower()}")(v)
+            for v in value
+        ]
+        if operator:
+            separator = f" {operator} "
+        else:
+            separator = ","
+        return separator.join(values)
+
+    def _set_parameter_str(self, value: str, *args, **kwargs):
         """Process a string value for parameterization"""
         return normtext(value)
 
