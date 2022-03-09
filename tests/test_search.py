@@ -19,3 +19,5 @@ logger = logging.getLogger(fn)
 class TestSearch:
     def test_init_searchinterface(self):
         si = SearchInterface()
+        assert getattr(si, "web")
+        assert getattr(si.web, "get")

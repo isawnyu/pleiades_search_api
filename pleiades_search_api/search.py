@@ -9,10 +9,11 @@ Defines the SearchInterface class: handle interactions with Pleiades
 """
 
 import logging
+from pleiades_search_api.web import Web, DEFAULT_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
 
-class SearchInterface:
-
-    pass
+class SearchInterface(Web):
+    def __init__(self, user_agent=DEFAULT_USER_AGENT):
+        Web.__init__(self, netloc="pleiades.stoa.org", user_agent=user_agent)
