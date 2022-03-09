@@ -28,3 +28,19 @@ class TestSearch:
         ua = "CosmicBurritoBot/7.3 (+http://nowhere.com/cosmicburritobot)"
         si = SearchInterface(user_agent=ua)
         assert si.web.user_agent == ua
+
+    def test_search_rss_title(self):
+        si = SearchInterface()
+        params = (
+            "Title=Zucchabar&portal_type%3Alist=Place&review_state%3Alist=published"
+        )
+        results = si._search_rss(params)
+        assert results["query"] == "https://pleiades.stoa.org/search_rss?" + params
+        assert len(results["hits"]) == 1
+        hit = results["hits"][0]
+        assert hit["id"] == "295374"
+        assert hit["title"] == "Zucchabar"
+        assert hit["uri"] == "https://pleiades.stoa.org/places/295374"
+        assert hit["summary"].startswith(
+            "Zucchabar was an ancient city of Mauretania Caesariensis with Punic origins."
+        )

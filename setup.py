@@ -26,6 +26,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
+        "feedparser",
         "textnorm",
         "webiquette @ git+https://github.com/paregorios/webiquette.git",
     ],
