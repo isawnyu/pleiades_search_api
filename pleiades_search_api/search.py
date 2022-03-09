@@ -13,6 +13,7 @@ import logging
 from urllib.parse import urlencode, urlunparse
 from pleiades_search_api.text import normtext
 from pleiades_search_api.web import Web, DEFAULT_USER_AGENT
+from pprint import pformat
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class Query:
         self.parameters = dict()
         self._supported_parameters = {
             "description": (str, list),
+            "feature_type": (str, list),
             "text": (str, list),
             "title": str,
         }
@@ -64,7 +66,7 @@ class Query:
             )
         self.parameters[name] = getattr(
             self, f"_set_parameter_{value.__class__.__name__.lower()}"
-        )(value, operator)
+        )(value, operator=operator, parameter_name=name)
 
     def _convert_for_web(self, name, value):
         return getattr(self, f"_convert_{name}_for_web")(value)
@@ -72,23 +74,38 @@ class Query:
     def _convert_description_for_web(self, value):
         return {"Description": value}
 
+    def _convert_feature_type_for_web(self, value, operator=None):
+        logger.debug("_convert_feature_type_for_web")
+        d = {"getFeatureType_usage:ignore_empty": None, "getFeatureType": value}
+        if operator:
+            if operator == "AND":
+                d["get_usage:ignore_empty"] = "operator:and"
+        logger.debug(pformat(d, indent=4))
+        return d
+
     def _convert_text_for_web(self, value):
         return {"SearchableText": value}
 
     def _convert_title_for_web(self, value):
         return {"Title": value}
 
-    def _set_parameter_list(self, value: list, operator=None):
-        """Process a string value for parameterization"""
+    def _set_parameter_list(self, value: list, operator=None, parameter_name=None):
+        """Process a list value for parameterization"""
+        logger.debug("set_parameter_list")
         values = [
             getattr(self, f"_set_parameter_{v.__class__.__name__.lower()}")(v)
             for v in value
         ]
-        if operator:
-            separator = f" {operator} "
+        logger.debug(f"parameter_name: {parameter_name}")
+        if parameter_name in ["feature_type"]:
+            logger.debug("returning a list")
+            return values
         else:
-            separator = ","
-        return separator.join(values)
+            if operator:
+                separator = f" {operator} "
+            else:
+                separator = ","
+            return separator.join(values)
 
     def _set_parameter_str(self, value: str, *args, **kwargs):
         """Process a string value for parameterization"""
@@ -126,11 +143,16 @@ class SearchInterface(Web):
     def _prep_params(self, **kwargs):
         ready_kwargs = dict()
         for k, v in kwargs.items():
-            if isinstance(v, str):
+            if v is None:
+                ready_kwargs[k] = ""
+            elif isinstance(v, str):
                 ready_kwargs[k] = v
             elif isinstance(v, list):
-                ready_kwargs[f"{k}:list"] = ",".join(v)
+                if k in ["getFeatureType"]:
+                    ready_kwargs[k] = v
+                else:
+                    ready_kwargs[f"{k}:list"] = ",".join(v)
             else:
                 raise TypeError(type(v))
-        params = urlencode(ready_kwargs)
+        params = urlencode(ready_kwargs, doseq=True)
         return params
