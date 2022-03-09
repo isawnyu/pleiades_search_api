@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 class Query:
     def __init__(self):
         self.parameters = dict()
-        self._supported_parameters = {"text": (str, list), "title": str}
+        self._supported_parameters = {
+            "description": (str, list),
+            "text": (str, list),
+            "title": str,
+        }
         self._default_parameters = {
             "portal_type": ["Place"],
             "review_state": ["published"],
@@ -64,6 +68,9 @@ class Query:
 
     def _convert_for_web(self, name, value):
         return getattr(self, f"_convert_{name}_for_web")(value)
+
+    def _convert_description_for_web(self, value):
+        return {"Description": value}
 
     def _convert_text_for_web(self, value):
         return {"SearchableText": value}
