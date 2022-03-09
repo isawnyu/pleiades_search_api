@@ -37,6 +37,9 @@ class Query:
             "tag": {
                 "expected": (str, list),
                 "list_behavior": "noseq",
+                "list_additional": {
+                    "AND": {"Subject_usage:ignore_empty": "operator:and"}
+                },
                 "rename": "Subject:list",
             },
             "text": {

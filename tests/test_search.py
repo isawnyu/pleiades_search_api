@@ -78,6 +78,13 @@ class TestQuery:
         assert q.parameters["tag"] == (["Ammon", "Amun"], "OR")
         assert q.parameters_for_web["Subject:list"] == ["Ammon", "Amun"]
 
+    def test_tag_and(self):
+        q = Query()
+        q.set_parameter("tag", ["Magna Mater", "Mithras"], "AND")
+        assert q.parameters["tag"] == (["Magna Mater", "Mithras"], "AND")
+        assert q.parameters_for_web["Subject:list"] == ["Magna Mater", "Mithras"]
+        assert q.parameters_for_web["Subject_usage:ignore_empty"] == "operator:and"
+
     def test_title(self):
         q = Query()
         q.set_parameter("title", "Zucchabar")
@@ -203,6 +210,12 @@ class TestSearch:
         q.set_parameter("tag", ["Ammon", "Amun"], "OR")
         results = self.si.search(q)
         assert len(results["hits"]) == 2
+
+    def test_search_tag_and(self):
+        q = Query()
+        q.set_parameter("tag", ["Magna Mater", "Mithras"], "AND")
+        results = self.si.search(q)
+        assert len(results["hits"]) == 1
 
     def test_search_title(self):
         q = Query()
