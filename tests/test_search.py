@@ -10,10 +10,24 @@ Test the pleiades_search_api.search module
 """
 import logging
 from pathlib import Path
-from pleiades_search_api.search import SearchInterface
+from pleiades_search_api.search import Query, SearchInterface
 
 fn = Path(__file__).name
 logger = logging.getLogger(fn)
+
+
+class TestQuery:
+    def test_title(self):
+        q = Query()
+        q.set_parameter("title", "Zucchabar")
+        assert q.parameters["title"] == "Zucchabar"
+        assert q.parameters_for_web["Title"] == "Zucchabar"
+
+    def test_text_simple(self):
+        q = Query()
+        q.set_parameter("text", "Miliana")
+        assert q.parameters["text"] == "Miliana"
+        assert q.parameters_for_web["SearchableText"] == "Miliana"
 
 
 class TestSearch:
@@ -56,7 +70,7 @@ class TestSearch:
         kwargs["where"] = "Burrito Bunker"
         params = si._prep_params(**kwargs)
         assert params == "foo=bar&raw=cooked&where=Burrito+Bunker"
-        kwargs["when"] = "   A long,\tlong time ago"
+        kwargs["when"] = "A long, long time ago"
         params = si._prep_params(**kwargs)
         assert (
             params
@@ -64,4 +78,24 @@ class TestSearch:
         )
 
     def test_search_title(self):
-        pass
+        si = SearchInterface()
+        q = Query()
+        q.set_parameter("title", "Zucchabar")
+        results = si.search(q)
+        assert len(results["hits"]) == 1
+        hit = results["hits"][0]
+        assert hit["id"] == "295374"
+        assert hit["title"] == "Zucchabar"
+        assert hit["uri"] == "https://pleiades.stoa.org/places/295374"
+        assert hit["summary"].startswith(
+            "Zucchabar was an ancient city of Mauretania Caesariensis with Punic origins."
+        )
+
+    def test_search_text_simple(self):
+        si = SearchInterface()
+        q = Query()
+        q.set_parameter("text", "Miliana")
+        results = si.search(q)
+        assert len(results["hits"]) == 4
+        for hit in results["hits"]:
+            assert hit["id"] in ["315048", "295374", "295304", "315104"]

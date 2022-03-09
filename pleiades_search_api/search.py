@@ -17,9 +17,74 @@ from pleiades_search_api.web import Web, DEFAULT_USER_AGENT
 logger = logging.getLogger(__name__)
 
 
+class Query:
+    def __init__(self):
+        self.parameters = dict()
+        self._supported_parameters = {"text": str, "title": str}
+        self._default_parameters = {
+            "portal_type": ["Place"],
+            "review_state": ["published"],
+        }
+
+    @property
+    def supported(self):
+        """List supported parameters"""
+        return list(self._supported_parameters.keys())
+
+    def clear_parameters(self):
+        """Reset all parameters for the query."""
+        self.parameters = dict()
+
+    @property
+    def parameters_for_web(self):
+        p = dict()
+        for k, v in self._default_parameters.items():
+            p[k] = v
+        for k, v in self.parameters.items():
+            these_web_params = self._convert_for_web(k, v)
+            for webk, webv in these_web_params.items():
+                p[webk] = webv
+        return p
+
+    def set_parameter(self, name, value):
+        """Set a single parameter on the query."""
+        try:
+            expected_class = self._supported_parameters[name]
+        except KeyError:
+            raise ValueError(
+                f"Unexpected parameter name '{name}'. Supported parameters: {sorted(self.supported)}."
+            )
+        if not isinstance(value, expected_class):
+            raise TypeError(
+                f"Unexpected type {type(value)} for parameter '{name}'. Expected type: {expected_class}."
+            )
+        self.parameters[name] = getattr(
+            self, f"_set_parameter_{expected_class.__name__}"
+        )(value)
+
+    def _convert_for_web(self, name, value):
+        return getattr(self, f"_convert_{name}_for_web")(value)
+
+    def _convert_text_for_web(self, value):
+        return {"SearchableText": value}
+
+    def _convert_title_for_web(self, value):
+        return {"Title": value}
+
+    def _set_parameter_str(self, value: str):
+        """Process a string value for parameterization"""
+        return normtext(value)
+
+
 class SearchInterface(Web):
     def __init__(self, user_agent=DEFAULT_USER_AGENT):
         Web.__init__(self, netloc="pleiades.stoa.org", user_agent=user_agent)
+        self._terms = {"title": str}
+
+    def search(self, query: Query):
+        """Search Pleiades for the query."""
+        params = self._prep_params(**query.parameters_for_web)
+        return self._search_rss(params)
 
     def _search_rss(self, params):
         """Use Pleiades RSS search interface since it gives us back structured data."""
@@ -40,11 +105,13 @@ class SearchInterface(Web):
         return {"query": uri, "hits": hits}
 
     def _prep_params(self, **kwargs):
-        params = dict()
+        ready_kwargs = dict()
         for k, v in kwargs.items():
-            params[k] = getattr(self, f"_prep_params_{v.__class__.__name__.lower()}")(v)
-        params = urlencode(params)
+            if isinstance(v, str):
+                ready_kwargs[k] = v
+            elif isinstance(v, list):
+                ready_kwargs[f"{k}:list"] = ",".join(v)
+            else:
+                raise TypeError(type(v))
+        params = urlencode(ready_kwargs)
         return params
-
-    def _prep_params_str(self, s: str):
-        return normtext(s)
