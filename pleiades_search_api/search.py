@@ -22,6 +22,7 @@ class Query:
     def __init__(self):
         self.parameters = dict()
         self._supported_parameters = {
+            "bbox": {"expected": (tuple), "behavior": self._preprocess_bbox},
             "description": {
                 "expected": (str, list),
                 "list_behavior": "join",
@@ -93,39 +94,59 @@ class Query:
             cooked_key = newname
 
         # pre-process web parameters to meet Pleiades query interface expectations
-        if isinstance(value, list):
-            try:
-                behavior = rules["list_behavior"]
-            except KeyError:
-                cooked_value = " ".join(value)
-            else:
-                if behavior == "list":
-                    cooked_key = ":".join((cooked_key, "list"))
-                    cooked_value = ",".join(value)
-                elif behavior == "join":
-                    if operator:
-                        cooked_value = f" {operator} ".join(value)
-                    else:
-                        cooked_value = " ".join(value)
-                elif behavior == "noseq":
-                    cooked_value = (
-                        value  # assumes urlencode will be applied with noseq=True
-                    )
+        try:
+            preprocess_func = rules["behavior"]
+        except KeyError:
+            if isinstance(value, list):
+                try:
+                    behavior = rules["list_behavior"]
+                except KeyError:
+                    cooked_value = " ".join(value)
                 else:
-                    raise ValueError(behavior)
-            try:
-                additional = rules["list_additional"][operator]
-            except KeyError:
-                pass
+                    if behavior == "list":
+                        cooked_key = ":".join((cooked_key, "list"))
+                        cooked_value = ",".join(value)
+                    elif behavior == "join":
+                        if operator:
+                            cooked_value = f" {operator} ".join(value)
+                        else:
+                            cooked_value = " ".join(value)
+                    elif behavior == "noseq":
+                        cooked_value = (
+                            value  # assumes urlencode will be applied with noseq=True
+                        )
+                    else:
+                        raise ValueError(behavior)
+                try:
+                    additional = rules["list_additional"][operator]
+                except KeyError:
+                    pass
+                else:
+                    for add_k, add_v in additional.items():
+                        web_params[add_k] = add_v
+            elif isinstance(value, str):
+                cooked_value = value
             else:
-                for add_k, add_v in additional.items():
-                    web_params[add_k] = add_v
-        elif isinstance(value, str):
-            cooked_value = value
+                raise TypeError(type(value))
+            web_params[cooked_key] = cooked_value
         else:
-            raise TypeError(type(value))
-        web_params[cooked_key] = cooked_value
+            these_params = preprocess_func(value)
+            for this_k, this_v in these_params.items():
+                web_params[this_k] = this_v
         return web_params
+
+    def _preprocess_bbox(self, bounds: tuple):
+        shaved_bounds = list()  # pleiades is weird
+        for i in [0, 1]:
+            shaved_bounds.append(bounds[i] + 0.0001)
+        for i in [2, 3]:
+            shaved_bounds.append(bounds[i] - 0.0001)
+        return {
+            "lowerLeft": f"{shaved_bounds[0]},{shaved_bounds[1]}",
+            "upperRight": f"{shaved_bounds[2]},{shaved_bounds[3]}",
+            "predicate": "intersection",
+            "location_precision:list": "precise",
+        }
 
 
 class SearchInterface(Web):

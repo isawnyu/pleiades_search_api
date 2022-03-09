@@ -18,6 +18,17 @@ logger = logging.getLogger(fn)
 
 
 class TestQuery:
+    def test_bounding_box(self):
+        q = Query()
+        bounds = (2.0, 36.0, 2.5, 36.5)
+        q.set_parameter("bbox", bounds)
+        assert q.parameters["bbox"] == (bounds, None)
+        pw = q.parameters_for_web
+        assert pw["lowerLeft"] == f"{bounds[0]+0.0001},{bounds[1]+0.0001}"
+        assert pw["upperRight"] == f"{bounds[2]-0.0001},{bounds[3]-0.0001}"
+        assert pw["predicate"] == "intersection"
+        assert pw["location_precision:list"] == "precise"
+
     def test_description(self):
         q = Query()
         q.set_parameter("description", "Punic")
@@ -125,6 +136,25 @@ class TestSearch:
             params
             == "foo=bar&raw=cooked&where=Burrito+Bunker&when=A+long%2C+long+time+ago"
         )
+
+    def test_search_bounding_box(self):
+        q = Query()
+        bounds = (2.0, 36.0, 2.5, 36.5)
+        q.set_parameter("bbox", bounds)
+        results = self.si.search(q)
+        assert len(results["hits"]) == 8
+        ids = {hit["id"] for hit in results["hits"]}
+        expected = {
+            "295216",
+            "295275",
+            "295304",
+            "295340",
+            "295342",
+            "295366",
+            "295374",
+            "296719",
+        }
+        assert ids == expected
 
     def test_search_description(self):
         q = Query()
