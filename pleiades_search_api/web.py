@@ -50,4 +50,5 @@ class Web:
         self.web = Webi(netloc=netloc, headers=headers, **web_kwargs)
 
     def get(self, uri: str):
+        """HTTP get using caching, robots:crawl-delay, etc."""
         return self.web.get(uri)
