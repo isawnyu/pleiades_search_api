@@ -252,3 +252,27 @@ class TestSearch:
         results = self.si.search(q)
         assert len(results["hits"]) == 1
         assert results["hits"][0]["id"] == "295374"
+
+
+class TestSearchCombinations:
+    si = SearchInterface()
+
+    def test_combo_1(self):
+        q = Query()
+        q.set_parameter("tag", ["Cybele", "Kybele", "Magna Mater"], "OR")
+        q.set_parameter("feature_type", ["sanctuary", "temple-2"], "OR")
+        results = self.si.search(q)
+        assert len(results["hits"]) == 5
+        expected = {"778145953", "550437", "87367170", "114722047", "109133"}
+        ids = {hit["id"] for hit in results["hits"]}
+        assert expected == ids
+
+    def test_combo_2(self):
+        q = Query()
+        q.set_parameter("feature_type", ["sanctuary", "temple-2"], "OR")
+        q.set_parameter("bbox", (27.5, 35.75, 28.3, 36.5))  # Rhodes and environs
+        results = self.si.search(q)
+        assert len(results["hits"]) == 4
+        expected = {"589700", "590099", "630398334", "414067217"}
+        ids = {hit["id"] for hit in results["hits"]}
+        assert expected == ids
