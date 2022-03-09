@@ -10,7 +10,8 @@ Defines the SearchInterface class: handle interactions with Pleiades
 
 import feedparser
 import logging
-from urllib.parse import urlunparse
+from urllib.parse import urlencode, urlunparse
+from pleiades_search_api.text import normtext
 from pleiades_search_api.web import Web, DEFAULT_USER_AGENT
 
 logger = logging.getLogger(__name__)
@@ -37,3 +38,13 @@ class SearchInterface(Web):
                 }
             )
         return {"query": uri, "hits": hits}
+
+    def _prep_params(self, **kwargs):
+        params = dict()
+        for k, v in kwargs.items():
+            params[k] = getattr(self, f"_prep_params_{v.__class__.__name__.lower()}")(v)
+        params = urlencode(params)
+        return params
+
+    def _prep_params_str(self, s: str):
+        return normtext(s)

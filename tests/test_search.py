@@ -29,7 +29,7 @@ class TestSearch:
         si = SearchInterface(user_agent=ua)
         assert si.web.user_agent == ua
 
-    def test_search_rss_title(self):
+    def test_search_rss(self):
         si = SearchInterface()
         params = (
             "Title=Zucchabar&portal_type%3Alist=Place&review_state%3Alist=published"
@@ -44,3 +44,24 @@ class TestSearch:
         assert hit["summary"].startswith(
             "Zucchabar was an ancient city of Mauretania Caesariensis with Punic origins."
         )
+
+    def test_prep_params_str(self):
+        si = SearchInterface()
+        kwargs = {"foo": "bar"}
+        params = si._prep_params(**kwargs)
+        assert params == "foo=bar"
+        kwargs = {"foo": "bar", "raw": "cooked"}
+        params = si._prep_params(**kwargs)
+        assert params == "foo=bar&raw=cooked"
+        kwargs["where"] = "Burrito Bunker"
+        params = si._prep_params(**kwargs)
+        assert params == "foo=bar&raw=cooked&where=Burrito+Bunker"
+        kwargs["when"] = "   A long\tlong time ago"
+        params = si._prep_params(**kwargs)
+        assert (
+            params
+            == "foo=bar&raw=cooked&where=Burrito+Bunker&when=A+long+long+time+ago"
+        )
+
+    def test_search_title(self):
+        pass
