@@ -21,56 +21,62 @@ class TestQuery:
     def test_description(self):
         q = Query()
         q.set_parameter("description", "Punic")
-        assert q.parameters["description"] == "Punic"
+        assert q.parameters["description"] == ("Punic", None)  # (value, operator)
         assert q.parameters_for_web["Description"] == "Punic"
 
     def test_description_or(self):
         q = Query()
         q.set_parameter("description", ["contested", "trace"], "OR")
-        assert q.parameters["description"] == "contested OR trace"
+        assert q.parameters["description"] == (["contested", "trace"], "OR")
         assert q.parameters_for_web["Description"] == "contested OR trace"
 
     def test_description_and(self):
         q = Query()
         q.set_parameter("description", ["contested", "trace"], "AND")
-        assert q.parameters["description"] == "contested AND trace"
+        assert q.parameters["description"] == (["contested", "trace"], "AND")
         assert q.parameters_for_web["Description"] == "contested AND trace"
 
     def test_feature_type(self):
         q = Query()
         q.set_parameter("feature_type", "agora")
-        assert q.parameters["feature_type"] == "agora"
+        assert q.parameters["feature_type"] == ("agora", None)
         assert q.parameters_for_web["getFeatureType"] == "agora"
 
     def test_feature_type_or(self):
         q = Query()
         q.set_parameter("feature_type", ["acropolis", "agora"], "OR")
-        assert q.parameters["feature_type"] == ["acropolis", "agora"]
+        assert q.parameters["feature_type"] == (["acropolis", "agora"], "OR")
         assert q.parameters_for_web["getFeatureType"] == ["acropolis", "agora"]
-        assert q.parameters_for_web["getFeatureType_usage:ignore_empty"] == None
+
+    def test_feature_type_and(self):
+        q = Query()
+        q.set_parameter("feature_type", ["acropolis", "agora"], "AND")
+        assert q.parameters["feature_type"] == (["acropolis", "agora"], "AND")
+        assert q.parameters_for_web["getFeatureType"] == ["acropolis", "agora"]
+        assert q.parameters_for_web["get_usage:ignore_empty"] == "operator:and"
 
     def test_title(self):
         q = Query()
         q.set_parameter("title", "Zucchabar")
-        assert q.parameters["title"] == "Zucchabar"
+        assert q.parameters["title"] == ("Zucchabar", None)
         assert q.parameters_for_web["Title"] == "Zucchabar"
 
     def test_text_simple(self):
         q = Query()
         q.set_parameter("text", "Miliana")
-        assert q.parameters["text"] == "Miliana"
+        assert q.parameters["text"] == ("Miliana", None)
         assert q.parameters_for_web["SearchableText"] == "Miliana"
 
     def test_text_or(self):
         q = Query()
         q.set_parameter("text", ["Zucchabar", "Luxmanda"], "OR")
-        assert q.parameters["text"] == "Zucchabar OR Luxmanda"
+        assert q.parameters["text"] == (["Zucchabar", "Luxmanda"], "OR")
         assert q.parameters_for_web["SearchableText"] == "Zucchabar OR Luxmanda"
 
     def test_text_and(self):
         q = Query()
         q.set_parameter("text", ["Zucchabar", "Miliana"], "AND")
-        assert q.parameters["text"] == "Zucchabar AND Miliana"
+        assert q.parameters["text"] == (["Zucchabar", "Miliana"], "AND")
         assert q.parameters_for_web["SearchableText"] == "Zucchabar AND Miliana"
 
 

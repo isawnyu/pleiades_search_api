@@ -22,14 +22,27 @@ class Query:
     def __init__(self):
         self.parameters = dict()
         self._supported_parameters = {
-            "description": (str, list),
-            "feature_type": (str, list),
-            "text": (str, list),
-            "title": str,
+            "description": {
+                "expected": (str, list),
+                "list_behavior": "join",
+                "rename": "Description",
+            },
+            "feature_type": {
+                "expected": (str, list),
+                "list_behavior": "noseq",
+                "list_additional": {"AND": {"get_usage:ignore_empty": "operator:and"}},
+                "rename": "getFeatureType",
+            },
+            "text": {
+                "expected": (str, list),
+                "list_behavior": "join",
+                "rename": "SearchableText",
+            },
+            "title": {"expected": str, "rename": "Title"},
         }
-        self._default_parameters = {
-            "portal_type": ["Place"],
-            "review_state": ["published"],
+        self._default_web_parameters = {
+            "portal_type:list": "Place",
+            "review_state:list": "published",
         }
 
     @property
@@ -44,10 +57,10 @@ class Query:
     @property
     def parameters_for_web(self):
         p = dict()
-        for k, v in self._default_parameters.items():
+        for k, v in self._default_web_parameters.items():
             p[k] = v
         for k, v in self.parameters.items():
-            these_web_params = self._convert_for_web(k, v)
+            these_web_params = self._convert_for_web(k, *v)
             for webk, webv in these_web_params.items():
                 p[webk] = webv
         return p
@@ -55,61 +68,64 @@ class Query:
     def set_parameter(self, name, value, operator=None):
         """Set a single parameter on the query."""
         try:
-            expected_classes = self._supported_parameters[name]
+            rules = self._supported_parameters[name]
         except KeyError:
             raise ValueError(
                 f"Unexpected parameter name '{name}'. Supported parameters: {sorted(self.supported)}."
             )
-        if not isinstance(value, expected_classes):
+        if not isinstance(value, rules["expected"]):
             raise TypeError(
-                f"Unexpected type {type(value)} for parameter '{name}'. Expected type(s): {expected_classes}."
+                f"Unexpected type {type(value)} for parameter '{name}'. Expected type(s): {rules['expected']}."
             )
-        self.parameters[name] = getattr(
-            self, f"_set_parameter_{value.__class__.__name__.lower()}"
-        )(value, operator=operator, parameter_name=name)
+        self.parameters[name] = (value, operator)
 
-    def _convert_for_web(self, name, value):
-        return getattr(self, f"_convert_{name}_for_web")(value)
+    def _convert_for_web(self, name, value, operator):
+        """Convert our generic parameters to the specific ones Pleiades uses"""
+        web_params = dict()
+        rules = self._supported_parameters[name]
 
-    def _convert_description_for_web(self, value):
-        return {"Description": value}
-
-    def _convert_feature_type_for_web(self, value, operator=None):
-        logger.debug("_convert_feature_type_for_web")
-        d = {"getFeatureType_usage:ignore_empty": None, "getFeatureType": value}
-        if operator:
-            if operator == "AND":
-                d["get_usage:ignore_empty"] = "operator:and"
-        logger.debug(pformat(d, indent=4))
-        return d
-
-    def _convert_text_for_web(self, value):
-        return {"SearchableText": value}
-
-    def _convert_title_for_web(self, value):
-        return {"Title": value}
-
-    def _set_parameter_list(self, value: list, operator=None, parameter_name=None):
-        """Process a list value for parameterization"""
-        logger.debug("set_parameter_list")
-        values = [
-            getattr(self, f"_set_parameter_{v.__class__.__name__.lower()}")(v)
-            for v in value
-        ]
-        logger.debug(f"parameter_name: {parameter_name}")
-        if parameter_name in ["feature_type"]:
-            logger.debug("returning a list")
-            return values
+        # determine parameter name (key) to use in web query
+        try:
+            newname = rules["rename"]
+        except KeyError:
+            cooked_key = name
         else:
-            if operator:
-                separator = f" {operator} "
-            else:
-                separator = ","
-            return separator.join(values)
+            cooked_key = newname
 
-    def _set_parameter_str(self, value: str, *args, **kwargs):
-        """Process a string value for parameterization"""
-        return normtext(value)
+        # pre-process web parameters to meet Pleiades query interface expectations
+        if isinstance(value, list):
+            try:
+                behavior = rules["list_behavior"]
+            except KeyError:
+                cooked_value = " ".join(value)
+            else:
+                if behavior == "list":
+                    cooked_key = ":".join((cooked_key, "list"))
+                    cooked_value = ",".join(value)
+                elif behavior == "join":
+                    if operator:
+                        cooked_value = f" {operator} ".join(value)
+                    else:
+                        cooked_value = " ".join(value)
+                elif behavior == "noseq":
+                    cooked_value = (
+                        value  # assumes urlencode will be applied with noseq=True
+                    )
+                else:
+                    raise ValueError(behavior)
+            try:
+                additional = rules["list_additional"][operator]
+            except KeyError:
+                pass
+            else:
+                for add_k, add_v in additional.items():
+                    web_params[add_k] = add_v
+        elif isinstance(value, str):
+            cooked_value = value
+        else:
+            raise TypeError(type(value))
+        web_params[cooked_key] = cooked_value
+        return web_params
 
 
 class SearchInterface(Web):
