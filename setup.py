@@ -30,5 +30,5 @@ setuptools.setup(
         "textnorm",
         "webiquette @ git+https://github.com/paregorios/webiquette.git",
     ],
-    python_requires=">=3",
+    python_requires=">=3.6",
 )
