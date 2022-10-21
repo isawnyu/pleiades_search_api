@@ -8,7 +8,7 @@ Licensed under the AGPL-3.0; see LICENSE.txt file.
 
 ## Getting started
 
-Use a python 3.10.2 environment and then run `pip install -r requirements_dev.txt`. Fire up the python interpreter and:
+Use a python 3.6 or greater environment and then run `pip install -r requirements_dev.txt`. Fire up the python interpreter and:
 
 ```python
 >>> from pleiades_search_api.search import Query, SearchInterface
