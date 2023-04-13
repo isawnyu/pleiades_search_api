@@ -22,32 +22,42 @@ logger = logging.getLogger(__name__)
 class Web:
     """Base mixin for providing web-aware functionality to API interface classes."""
 
-    def __init__(self, netloc: str, user_agent=DEFAULT_USER_AGENT, **kwargs):
-        headers = deepcopy(DEFAULT_HEADERS)
-        ua = None
-        try:
-            ua = normtext(user_agent)
-        except TypeError:
-            pass
-        if not ua:
-            ua = DEFAULT_USER_AGENT
-        if ua == DEFAULT_USER_AGENT:
-            logger.warning(
-                f'Using default HTTP Request header for User-Agent = "{ua}". '
-                "We strongly prefer you define your own unique user-agent string."
-            )
-        headers["User-Agent"] = ua
-        try:
-            headers["accept"] = kwargs["accept"]
-        except KeyError:
-            pass
-        web_kwargs = dict()
-        if kwargs:
-            for k, v in kwargs.items():
-                if k in {"respect_robots_txt", "cache_control", "expire_after"}:
-                    web_kwargs[k] = v
+    def __init__(
+        self,
+        netloc,
+        webi: Webi = None,
+        user_agent=DEFAULT_USER_AGENT,
+        **kwargs,
+    ):
+        if webi is not None:
+            if netloc == webi.netloc:
+                self.web == webi
+        else:
+            headers = deepcopy(DEFAULT_HEADERS)
+            ua = None
+            try:
+                ua = normtext(user_agent)
+            except TypeError:
+                pass
+            if not ua:
+                ua = DEFAULT_USER_AGENT
+            if ua == DEFAULT_USER_AGENT:
+                logger.warning(
+                    f'Using default HTTP Request header for User-Agent = "{ua}". '
+                    "We strongly prefer you define your own unique user-agent string."
+                )
+            headers["User-Agent"] = ua
+            try:
+                headers["accept"] = kwargs["accept"]
+            except KeyError:
+                pass
+            web_kwargs = dict()
+            if kwargs:
+                for k, v in kwargs.items():
+                    if k in {"respect_robots_txt", "cache_control", "expire_after"}:
+                        web_kwargs[k] = v
 
-        self.web = Webi(netloc=netloc, headers=headers, **web_kwargs)
+            self.web = Webi(netloc=netloc, headers=headers, **web_kwargs)
 
     def get(self, uri: str):
         """HTTP get using caching, robots:crawl-delay, etc."""
