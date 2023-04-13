@@ -31,7 +31,7 @@ class Web:
     ):
         if webi is not None:
             if netloc == webi.netloc:
-                self.web == webi
+                self.web = webi
         else:
             headers = deepcopy(DEFAULT_HEADERS)
             ua = None
