@@ -14,6 +14,7 @@ from urllib.parse import urlencode, urlunparse
 from pleiades_search_api.text import normtext
 from pleiades_search_api.web import Web, DEFAULT_USER_AGENT
 from pprint import pformat
+from webiquette.webi import Webi
 
 logger = logging.getLogger(__name__)
 
@@ -159,8 +160,8 @@ class Query:
 
 
 class SearchInterface(Web):
-    def __init__(self, user_agent=DEFAULT_USER_AGENT):
-        Web.__init__(self, netloc="pleiades.stoa.org", user_agent=user_agent)
+    def __init__(self, user_agent=DEFAULT_USER_AGENT, webi: Webi = None):
+        Web.__init__(self, netloc="pleiades.stoa.org", user_agent=user_agent, webi=webi)
         self._terms = {"title": str}
 
     def search(self, query: Query):
