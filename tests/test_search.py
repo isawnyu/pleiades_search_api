@@ -203,7 +203,7 @@ class TestSearch:
         q = Query()
         q.set_parameter("feature_type", ["acropolis", "agora"], "OR")
         results = self.si.search(q)
-        assert len(results["hits"]) == 25
+        assert len(results["hits"]) == 77
 
     def test_search_tag(self):
         q = Query()
@@ -268,8 +268,15 @@ class TestSearchCombinations:
         q.set_parameter("tag", ["Cybele", "Kybele", "Magna Mater"], "OR")
         q.set_parameter("feature_type", ["sanctuary", "temple-2"], "OR")
         results = self.si.search(q)
-        assert len(results["hits"]) == 5
-        expected = {"778145953", "550437", "87367170", "114722047", "109133"}
+        assert len(results["hits"]) == 6
+        expected = {
+            "778145953",
+            "550437",
+            "87367170",
+            "114722047",
+            "109133",
+            "376031237",
+        }
         ids = {hit["id"] for hit in results["hits"]}
         assert expected == ids
 
