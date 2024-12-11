@@ -161,19 +161,25 @@ class TestSearch:
         bounds = (2.0, 36.0, 2.5, 36.5)
         q.set_parameter("bbox", bounds)
         results = self.si.search(q)
-        assert len(results["hits"]) == 8
+        assert len(results["hits"]) == 14
         ids = {hit["id"] for hit in results["hits"]}
         expected = {
+            "289924",
             "295216",
+            "295225",
+            "295251",
+            "295252",
             "295275",
             "295304",
+            "295306",
             "295340",
             "295342",
+            "295348",
             "295366",
             "295374",
             "296719",
         }
-        assert ids == expected
+        assert expected == ids
 
     def test_search_description(self):
         q = Query()
