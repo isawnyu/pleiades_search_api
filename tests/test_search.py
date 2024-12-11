@@ -109,6 +109,12 @@ class TestQuery:
         assert q.parameters["text"] == (["Zucchabar", "Miliana"], "AND")
         assert q.parameters_for_web["SearchableText"] == "Zucchabar AND Miliana"
 
+    def test_created_date(self):
+        q = Query()
+        q.set_parameter("created", "2024-12-01")
+        assert q.parameters["created"] == ("2024-12-01", None)
+        assert q.parameters_for_web["created:list:date"] == "2024-12-01"
+
 
 class TestSearch:
     si = SearchInterface()
