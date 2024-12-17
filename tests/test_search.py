@@ -111,9 +111,9 @@ class TestQuery:
 
     def test_created_date(self):
         q = Query()
-        q.set_parameter("created", "2024-12-15")
-        assert q.parameters["created"] == ("2024-12-15", None)
-        assert q.parameters_for_web["created:list:date"] == "2024-12-15"
+        q.set_parameter("created", ["2024-12-15"])
+        assert q.parameters["created"] == (["2024-12-15"], None)
+        assert q.parameters_for_web["created:list:date"] == ["2024-12-15"]
         assert q.parameters_for_web["created_usage"] == "range:min"
 
     def test_modified_date(self):
