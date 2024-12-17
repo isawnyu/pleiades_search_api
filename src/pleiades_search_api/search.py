@@ -48,6 +48,18 @@ class Query:
                 "rename": "SearchableText",
             },
             "title": {"expected": str, "rename": "Title"},
+            "modified": {
+                "expected": (list),
+                "list_behavior": "noseq",
+                "list_additional": {"default": {"modified_usage": "range:min"}},
+                "rename": "modified:list:date",
+            },
+            "created": {
+                "expected": (list),
+                "list_behavior": "noseq",
+                "list_additional": {"default": {"created_usage": "range:min"}},
+                "rename": "created:list:date",
+            },
         }
         self._default_web_parameters = {
             "portal_type:list": "Place",
@@ -126,12 +138,18 @@ class Query:
                         )
                     else:
                         raise ValueError(behavior)
+                logger.debug(f"operator: {operator}")
+                additional = None
                 try:
                     additional = rules["list_additional"][operator]
                 except KeyError:
-                    pass
-                else:
+                    try:
+                        additional = rules["list_additional"]["default"]
+                    except KeyError:
+                        logger.error("CRAP!")
+                if additional is not None:
                     for add_k, add_v in additional.items():
+                        logger.debug(f"add additional parameter '{add_k}'='{add_v}")
                         web_params[add_k] = add_v
             elif isinstance(value, str):
                 cooked_value = value

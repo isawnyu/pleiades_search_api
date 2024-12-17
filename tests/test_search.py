@@ -111,9 +111,17 @@ class TestQuery:
 
     def test_created_date(self):
         q = Query()
-        q.set_parameter("created", "2024-12-01")
-        assert q.parameters["created"] == ("2024-12-01", None)
-        assert q.parameters_for_web["created:list:date"] == "2024-12-01"
+        q.set_parameter("created", "2024-12-15")
+        assert q.parameters["created"] == ("2024-12-15", None)
+        assert q.parameters_for_web["created:list:date"] == "2024-12-15"
+        assert q.parameters_for_web["created_usage"] == "range:min"
+
+    def test_modified_date(self):
+        q = Query()
+        q.set_parameter("modified", ["2024-12-15"])
+        assert q.parameters["modified"] == (["2024-12-15"], None)
+        assert q.parameters_for_web["modified:list:date"] == ["2024-12-15"]
+        assert q.parameters_for_web["modified_usage"] == "range:min"
 
 
 class TestSearch:
@@ -264,6 +272,13 @@ class TestSearch:
         results = self.si.search(q)
         assert len(results["hits"]) == 1
         assert results["hits"][0]["id"] == "295374"
+
+    def test_search_modified(self):
+        q = Query()
+        q.set_parameter("modified", ["2024-12-15"])
+        results = self.si.search(q)
+        assert len(results["hits"]) > 1
+        logger.debug(pformat(results["hits"], indent=4))
 
 
 class TestSearchCombinations:
